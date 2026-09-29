@@ -1,0 +1,402 @@
+<!doctype html>
+<html lang="ka">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#ffffff">
+<title>ინვესტიციები — პორტფელის ჩარტი (ტესტი)</title>
+<style>
+/* BOG font: drop BOG-Medium.woff2 / BOG-SemiBold.woff2 into assets/fonts to load it on devices that don't have it installed */
+@font-face{font-family:"BOG";font-weight:500;src:local("BOG Medium"),local("BOG-Medium"),url(assets/fonts/BOG-Medium.woff2) format("woff2")}
+@font-face{font-family:"BOG";font-weight:600;src:local("BOG SemiBold"),local("BOG-SemiBold"),url(assets/fonts/BOG-SemiBold.woff2) format("woff2")}
+
+/* ---- Design tokens (names mirror the Figma variables) ---- */
+:root{
+  --text-primary:#1B1C1D; --text-secondary:#515457; --text-disabled:#AAADB0;
+  --text-success:#198038; --text-danger:#DA1E28; --text-on-primary:#FFFFFF;
+  --background-01:#FFFFFF; --layer-01:#FFFFFF; --layer-05:#FFFFFF;
+  --layer-alpha-01:rgba(108,112,117,.06); --layer-inverse-01:#1B1C1D;
+  --border-01:#D7D9DB; --border-selected-neutral-strong:#515457;
+  --button-primary:#FF5C0A; --button-secondary-grey:rgba(108,112,117,.10); --button-secondary:rgba(255,92,10,.08);
+  --decorative-green:#4FD156; --decorative-red:#DA1E28; --benchmark:#6E5CE6;
+  --overlay-canvas:rgba(15,15,16,.68); --overlay-media:rgba(108,112,117,.06);
+  --radius-small:8px; --radius-medium:12px; --radius-default:16px; --radius-full:100px;
+  --space-2:2px; --space-4:4px; --space-6:6px; --space-8:8px; --space-12:12px; --space-16:16px; --space-24:24px; --space-32:32px;
+  --font:"BOG","Noto Sans Georgian","Helvetica Neue",system-ui,sans-serif;
+}
+/* ---- Text styles ---- */
+.t-heading-l{font:600 32px/44px var(--font);letter-spacing:0}
+.t-heading-s{font:600 24px/32px var(--font)}
+.t-subtitle-l{font:600 17px/20px var(--font);letter-spacing:-.1px}
+.t-label-l{font:600 16px/20px var(--font)}
+.t-label-m{font:600 14px/20px var(--font)}
+.t-label-s{font:600 12px/16px var(--font)}
+.t-label-xs{font:500 11px/16px var(--font)}
+.t-body-l{font:500 16px/20px var(--font)}
+.t-body-s{font:500 12px/18px var(--font)}
+
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:#E9EBEE;color:var(--text-primary);font-family:var(--font);-webkit-font-smoothing:antialiased}
+body{display:flex;justify-content:center}
+button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:pointer}
+p{margin:0}
+.screen{position:relative;width:100%;max-width:430px;min-height:100vh;min-height:100dvh;background:var(--background-01);overflow-x:hidden;padding-bottom:130px}
+@media (min-width:500px){body{padding:24px 0}.screen{max-width:375px;min-height:812px;height:812px;overflow-y:auto;border-radius:40px;box-shadow:0 20px 60px rgba(0,0,0,.18)}}
+
+/* Icon Button (Neutral / Secondary, Small 32 & Medium 44) */
+.icon-btn{display:grid;place-items:center;flex:none;width:32px;height:32px;border-radius:var(--radius-full);background:var(--button-secondary-grey);color:var(--text-primary)}
+.icon-btn.m{width:44px;height:44px}
+.icon-btn.secondary{background:var(--button-secondary);color:var(--button-primary)}
+.icon-btn img,.icon-btn svg{width:16px;height:16px;display:block}
+
+/* Top area: Navigation Bar + Search input + Segmented Control Large */
+.top{display:flex;flex-direction:column;gap:var(--space-24);padding-top:env(safe-area-inset-top)}
+.navbar{display:flex;align-items:center;gap:var(--space-16);height:44px;padding:0 var(--space-16)}
+.navbar .title{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.top-body{display:flex;flex-direction:column;gap:var(--space-16);padding:0 var(--space-16)}
+.search{display:flex;align-items:center;gap:var(--space-8);height:40px;padding:var(--space-2) var(--space-12);border-radius:var(--radius-medium);background:var(--layer-alpha-01);color:var(--text-secondary)}
+.search img{width:16px;height:16px}
+
+/* Segmented Control */
+.seg{display:flex;padding:var(--space-4);border-radius:var(--radius-medium);background:var(--layer-alpha-01)}
+.seg button{flex:1 0 0;min-width:0;min-height:32px;max-height:32px;border-radius:var(--radius-small);border:.5px solid transparent;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.seg button.on{background:var(--layer-05);border-color:var(--border-01);color:var(--text-primary)}
+.seg.large button{padding:var(--space-4) var(--space-8);font:600 14px/20px var(--font)}
+.seg.small button{padding:var(--space-8) var(--space-4);font:500 11px/16px var(--font)}
+.seg.small button.on{font:600 12px/16px var(--font)}
+
+/* Header: Big Amount + Text Badges */
+.hdr{display:flex;flex-direction:column;gap:var(--space-4);padding:var(--space-32) var(--space-16) 0}
+.amount-row{display:flex;align-items:center;justify-content:space-between;gap:var(--space-8)}
+.big-amount{display:flex;align-items:center;gap:var(--space-8);white-space:nowrap;font-variant-numeric:tabular-nums}
+.big-amount .cur{padding-right:var(--space-4)}
+.badges{display:flex;align-items:center;gap:var(--space-4);white-space:nowrap}
+.text-icon{display:flex;align-items:center;gap:var(--space-2)}
+.text-icon img{width:16px;height:16px}
+.success{color:var(--text-success)} .danger{color:var(--text-danger)} .secondary-t{color:var(--text-secondary)}
+.unit{display:none;width:96px}.unit.show{display:flex}
+.bench{display:none}.bench.show{display:flex}
+.swatch{width:8px;height:8px;border-radius:50%;background:var(--benchmark);margin:0 4px}
+.legend{display:none;gap:var(--space-16);padding:var(--space-16) var(--space-16) 0;color:var(--text-disabled)}
+.legend.show{display:flex}
+.legend span{display:flex;align-items:center;gap:var(--space-6)}
+.legend i{width:16px;border-top:2px solid var(--decorative-green);border-radius:1px}
+.legend i.d{border-top:2px dashed var(--benchmark)}
+
+/* Chart */
+.chart-wrap{position:relative;margin-top:var(--space-8)}
+svg.chart{display:block;width:100%;height:auto;overflow:visible;touch-action:none;user-select:none;-webkit-user-select:none}
+svg.chart text{font-family:var(--font);font-weight:500}
+.handle{cursor:grab}
+.tf-row{display:flex;align-items:center;gap:var(--space-8);height:56px;padding:var(--space-8) var(--space-16)}
+.tf-row .seg{flex:1}
+
+/* Main container: Banner Image Only + Slider Indicator */
+.main{display:flex;flex-direction:column;align-items:center;gap:var(--space-12);padding:var(--space-32) var(--space-16) var(--space-32)}
+.banner{position:relative;width:100%;height:138px;border-radius:var(--radius-medium);overflow:hidden}
+.banner img{width:100%;height:100%;object-fit:cover;display:block}
+.banner::after{content:"";position:absolute;inset:0;background:var(--overlay-media)}
+
+/* Sticky Bar (Page / Overlay) + Button Primary Medium + Home indicator */
+.sticky{position:fixed;left:50%;transform:translateX(-50%);bottom:0;width:100%;max-width:430px;padding-top:var(--space-24);background:linear-gradient(to bottom,rgba(255,255,255,0),#fff 20%);z-index:5}
+@media (min-width:500px){.sticky{position:absolute;max-width:375px}}
+.sticky .container{display:flex;flex-direction:column;gap:var(--space-12);padding:var(--space-16) var(--space-16) 0}
+.helper{text-align:center;color:var(--text-secondary)}
+.helper.err{color:var(--text-danger)}
+.btn-primary{width:100%;min-width:72px;padding:var(--space-12) var(--space-16);border-radius:var(--radius-medium);background:var(--button-primary);color:var(--text-on-primary)}
+.btn-primary:disabled{opacity:.4;cursor:default}
+.home{display:flex;justify-content:center;align-items:flex-end;min-height:34px;padding:var(--space-8) 0;padding-bottom:max(8px,env(safe-area-inset-bottom))}
+.home i{width:144px;height:5px;border-radius:var(--radius-full);background:var(--layer-inverse-01)}
+
+/* Bottom Sheet */
+.scrim{position:fixed;inset:0;background:var(--overlay-canvas);opacity:0;pointer-events:none;transition:opacity .25s;z-index:10}
+.scrim.open{opacity:1;pointer-events:auto}
+.sheet{position:fixed;left:50%;bottom:0;width:100%;max-width:430px;transform:translate(-50%,105%);transition:transform .32s cubic-bezier(.2,.8,.2,1);background:var(--layer-05);border-radius:var(--radius-default) var(--radius-default) 0 0;z-index:11}
+.sheet.open{transform:translate(-50%,0)}
+@media (min-width:500px){.scrim,.sheet{position:absolute}.sheet{max-width:375px}}
+.sheet-nav{display:flex;flex-direction:column;gap:var(--space-12);padding-bottom:var(--space-12)}
+.drag{height:16px;display:grid;place-items:center}.drag i{width:32px;height:4px;border-radius:var(--radius-full);background:var(--border-01)}
+.sheet-head{display:flex;align-items:center;gap:var(--space-6);padding:0 var(--space-12)}
+.sheet-head .t-subtitle-l{flex:1;padding:var(--space-6) 0 var(--space-6) var(--space-4)}
+.sheet-content{display:flex;flex-direction:column;align-items:center;gap:var(--space-16);padding:var(--space-16) var(--space-16) 0}
+.fields{display:flex;gap:var(--space-12);width:100%}
+/* Text input */
+.input{flex:1 0 0;min-width:0;display:flex;flex-direction:column;justify-content:center;max-height:56px;padding:var(--space-8) var(--space-16);border-radius:var(--radius-medium);background:var(--layer-alpha-01);border:1.6px solid transparent;text-align:left}
+.input.active{border-color:var(--border-selected-neutral-strong)}
+.input .lbl{color:var(--text-secondary);padding-top:2px}
+.input .val{display:flex;align-items:center;padding-bottom:2px}
+.input.active .val::after{content:"";width:1px;height:17px;margin-left:1px;background:var(--button-primary);animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+/* Wheel Picker (Multi) */
+.wheel{display:flex;gap:var(--space-4);width:288px;padding:var(--space-24) var(--space-16)}
+.col{flex:1 0 0;height:168px;overflow-y:scroll;scroll-snap-type:y mandatory;scrollbar-width:none;overscroll-behavior:contain;-webkit-mask-image:linear-gradient(#000,#000)}
+.col::-webkit-scrollbar{display:none}
+.col .it{height:24px;display:flex;align-items:center;justify-content:center;scroll-snap-align:center;font-family:var(--font);font-weight:600;color:var(--text-primary);white-space:nowrap;transition:font-size .08s,opacity .08s}
+.col .pad{height:72px}
+</style>
+</head>
+<body>
+<div class="screen" id="screen">
+
+  <div class="top">
+    <!-- Navigation Bar -->
+    <div class="navbar">
+      <button class="icon-btn" aria-label="უკან"><img src="assets/chevron-left.svg" alt=""></button>
+      <p class="title t-subtitle-l">ინვესტიციები</p>
+      <button class="icon-btn" aria-label="ჩატი"><img src="assets/chat.svg" alt=""></button>
+    </div>
+    <div class="top-body">
+      <!-- Search input -->
+      <div class="search"><img src="assets/search.svg" alt=""><span class="t-body-l">ძებნა</span></div>
+      <!-- Segmented Control / Large -->
+      <div class="seg large"><button class="on">ჩემი აქციები</button><button>აღმოაჩინე</button></div>
+    </div>
+  </div>
+
+  <!-- Big Amount + Text Badges -->
+  <div class="hdr">
+    <div class="amount-row">
+      <div class="big-amount t-heading-l"><span id="amount">—</span><span class="cur" id="cur">$</span></div>
+      <div class="seg small unit" id="unit"><button data-u="usd" class="on">$</button><button data-u="pct">%</button></div>
+    </div>
+    <div class="badges t-label-s">
+      <div class="text-icon"><img id="arrow" src="assets/price-up.svg" alt=""><span id="chgTxt" class="success"></span></div>
+      <span id="chgLbl" class="secondary-t"></span>
+    </div>
+    <div class="badges t-label-s bench" id="bench">
+      <div class="text-icon"><span class="swatch"></span><span id="benchTxt"></span></div>
+      <span id="benchLbl" class="secondary-t"></span>
+    </div>
+  </div>
+  <div class="legend t-body-s" id="legend"><span><i></i>ჩემი პორტფელი</span><span><i class="d"></i>S&amp;P 500</span></div>
+
+  <!-- Chart -->
+  <div class="chart-wrap"><svg class="chart" id="chart" viewBox="0 0 375 208" role="img" aria-label="პორტფელის ღირებულების ჩარტი"></svg></div>
+
+  <!-- Timeframes: Segmented Control / Small + Icon Button Neutral Small -->
+  <div class="tf-row">
+    <div class="seg small" id="seg">
+      <button data-r="1w">კვირა</button><button data-r="1m" class="on">თვე</button><button data-r="3m">3 თვე</button><button data-r="ytd">წელს</button><button data-r="1y">წელი</button><button data-r="all">სულ</button>
+    </div>
+    <button class="icon-btn" id="calBtn" aria-label="პერიოდის არჩევა"><svg viewBox="0 0 16 16"><path fill="currentColor" d="M11.2002 1C11.6419 1.00011 11.9999 1.35813 12 1.7998V2H13C14.1046 2 15 2.89543 15 4V13C15 14.0357 14.2128 14.887 13.2041 14.9893L13 15H3L2.7959 14.9893C1.85435 14.8938 1.1062 14.1457 1.01074 13.2041L1 13V4C1 2.89543 1.89543 2 3 2H4V1.7998C4.00011 1.35807 4.35804 1 4.7998 1C5.24148 1.00011 5.5995 1.35813 5.59961 1.7998V2H10.4004V1.7998C10.4005 1.35807 10.7584 1 11.2002 1ZM3 3.40039C2.66863 3.40039 2.40039 3.66863 2.40039 4V13C2.40039 13.3314 2.66863 13.5996 3 13.5996H13C13.3314 13.5996 13.5996 13.3314 13.5996 13V4C13.5996 3.66863 13.3314 3.40039 13 3.40039H3ZM12.2002 5C12.6419 5.00011 12.9999 5.35813 13 5.7998C13 6.24157 12.6419 6.5995 12.2002 6.59961H3.7998C3.35807 6.5995 3 6.24157 3 5.7998C3.00011 5.35813 3.35813 5.00011 3.7998 5H12.2002Z"/></svg></button>
+  </div>
+
+  <!-- Banner Image Only + Slider Indicator -->
+  <div class="main">
+    <div class="banner"><img src="assets/banner.png" alt=""></div>
+    <img src="assets/slider-indicator.svg" width="20" height="8" alt="">
+  </div>
+
+  <!-- Sticky Bar / Page -->
+  <div class="sticky" id="pageBar">
+    <div class="container"><button class="btn-primary t-label-l">ვაჭრობა</button></div>
+    <div class="home"><i></i></div>
+  </div>
+
+  <!-- Bottom Sheet (Overlay) -->
+  <div class="scrim" id="scrim"></div>
+  <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+    <div class="sheet-nav">
+      <div class="drag"><i></i></div>
+      <div class="sheet-head">
+        <p class="t-subtitle-l" id="sheetTitle">პერიოდის არჩევა</p>
+        <button class="icon-btn m" id="closeSheet" aria-label="დახურვა"><img src="assets/close.svg" alt=""></button>
+      </div>
+    </div>
+    <div class="sheet-content">
+      <div class="fields">
+        <button class="input active" id="fFrom"><span class="lbl t-label-xs">დან</span><span class="val t-body-l" id="fFromV"></span></button>
+        <button class="input" id="fTo"><span class="lbl t-label-xs">მდე</span><span class="val t-body-l" id="fToV"></span></button>
+      </div>
+      <div class="wheel"><div class="col" id="cDay"></div><div class="col" id="cMon"></div><div class="col" id="cYear"></div></div>
+    </div>
+    <!-- Sticky Bar / Overlay with helper text -->
+    <div class="sticky-overlay">
+      <div class="container" style="display:flex;flex-direction:column;gap:12px;padding:16px 16px 0">
+        <p class="helper t-body-s" id="msg"></p>
+        <button class="btn-primary t-label-l" id="apply">გამოყენება</button>
+      </div>
+      <div class="home"><i></i></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---------- test data (daily, 2024-01-02 → 2026-09-28) ---------- */
+const MS=86400000, D=(y,m,d)=>new Date(Date.UTC(y,m-1,d));
+const FIRST=D(2024,1,2), LAST=D(2026,9,28);
+// anchors reproduce the Figma numbers: 1M = +4.38% to 1,248.60 · 12 Mar–24 Jun = 1,092.20 → 1,184.30 (+8.43%), S&P +4.95%
+const anchors=[[D(2024,1,2),800],[D(2024,6,14),872],[D(2024,11,20),905],[D(2025,4,8),862],[D(2025,9,28),1003],[D(2026,1,1),1041],
+  [D(2026,3,12),1092.2],[D(2026,3,24),1076.5],[D(2026,6,24),1184.3],[D(2026,8,28),1196.2],[D(2026,8,31),1188],[D(2026,9,13),1233],
+  [D(2026,9,17),1256],[D(2026,9,21),1266.4],[D(2026,9,25),1242.2],[D(2026,9,28),1248.6]];
+const benchAnchors=[[D(2024,1,2),4700],[D(2025,4,8),4980],[D(2026,1,1),5880],[D(2026,3,12),5900],[D(2026,6,24),6192],[D(2026,8,28),6250],[D(2026,9,28),6381]];
+function build(anch,amp,seed){const out=[];let a=0;
+  for(let t=FIRST.getTime();t<=LAST.getTime();t+=MS){
+    while(a<anch.length-2&&t>anch[a+1][0].getTime())a++;
+    const t0=anch[a][0].getTime(),v0=anch[a][1],t1=anch[a+1][0].getTime(),v1=anch[a+1][1];
+    const f=(t-t0)/(t1-t0),base=v0+(v1-v0)*f,k=t/MS,env=Math.sin(Math.PI*f);
+    const n=(Math.sin(k*.9+seed)*.55+Math.sin(k*.37+seed*2)*.35+Math.sin(k*2.3+seed*3)*.25)*amp*base*env;
+    out.push({t,v:Math.round((base+n)*100)/100});}
+  return out;}
+const port=build(anchors,.006,1), bench=build(benchAnchors,.004,4);
+const idxOf=t=>Math.round((t-FIRST.getTime())/MS);
+
+/* ---------- formatting ---------- */
+const MON=['იან','თებ','მარ','აპრ','მაი','ივნ','ივლ','აგვ','სექ','ოქტ','ნოე','დეკ'];
+const fmt=n=>Math.abs(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const dstr=(t,yr)=>{const d=new Date(t);return d.getUTCDate()+' '+MON[d.getUTCMonth()]+(yr?', '+d.getUTCFullYear():'')};
+const $=id=>document.getElementById(id);
+
+/* ---------- state ---------- */
+const S={range:'1m',from:null,to:null,custom:false,unit:'usd',scrub:null};
+const LABEL={'1w':'ბოლო კვირა','1m':'ბოლო 1 თვე','3m':'ბოლო 3 თვე','ytd':'წლის დასაწყისიდან','1y':'ბოლო 1 წელი','all':'სულ'};
+function rangeBounds(){
+  if(S.custom) return [S.from,S.to];
+  const e=LAST.getTime(), back=m=>{const x=new Date(e);x.setUTCMonth(x.getUTCMonth()-m);return x.getTime();};
+  return {'1w':[e-7*MS,e],'1m':[back(1),e],'3m':[back(3),e],'ytd':[D(2026,1,1).getTime(),e],'1y':[back(12),e],'all':[FIRST.getTime(),e]}[S.range];
+}
+
+/* ---------- chart (geometry matches Figma frame 375×208, plot 319 wide) ---------- */
+const svg=$('chart'), NS='http://www.w3.org/2000/svg';
+const W=375,PW=319,Y0=22,Y1=160,H=208, C={green:'#4FD156',red:'#DA1E28',muted:'#AAADB0',bench:'#6E5CE6',white:'#FFFFFF'};
+let view=null;
+function el(tag,a,p){const e=document.createElementNS(NS,tag);for(const k in a)e.setAttribute(k,a[k]);(p||svg).appendChild(e);return e;}
+function smooth(p){let d=`M${p[0][0].toFixed(2)} ${p[0][1].toFixed(2)}`;for(let i=0;i<p.length-1;i++){const a=p[Math.max(0,i-1)],b=p[i],c=p[i+1],e=p[Math.min(p.length-1,i+2)];d+=` C${(b[0]+(c[0]-a[0])/6).toFixed(2)} ${(b[1]+(c[1]-a[1])/6).toFixed(2)} ${(c[0]-(e[0]-b[0])/6).toFixed(2)} ${(c[1]-(e[1]-b[1])/6).toFixed(2)} ${c[0].toFixed(2)} ${c[1].toFixed(2)}`;}return d;}
+function niceStep(span){const raw=span/2.2,p=Math.pow(10,Math.floor(Math.log10(raw))),m=raw/p;return (m<1.5?1:m<3?2:m<7?5:10)*p;}
+function sample(){
+  const [a,b]=rangeBounds(), i0=Math.max(0,idxOf(a)), i1=Math.min(port.length-1,idxOf(b));
+  const step=Math.max(1,Math.ceil((i1-i0+1)/80)), idx=[]; for(let i=i0;i<=i1;i+=step) idx.push(i); if(idx[idx.length-1]!==i1) idx.push(i1);
+  const pct=S.custom&&S.unit==='pct', v0=port[i0].v, b0=bench[i0].v;
+  return {pct,P:idx.map(i=>({t:port[i].t,v:port[i].v,y:pct?(port[i].v/v0-1)*100:port[i].v,b:(bench[i].v/b0-1)*100}))};
+}
+function render(){
+  const {pct,P}=sample(); svg.innerHTML='';
+  const ys=P.map(p=>p.y).concat(pct?P.map(p=>p.b).concat([0]):[]);
+  let lo=Math.min(...ys),hi=Math.max(...ys); const pad=(hi-lo)*.06||1; lo-=pad; hi+=pad;
+  const X=i=>i*PW/(P.length-1), Y=v=>Y0+(hi-v)/(hi-lo)*(Y1-Y0);
+  const up=P[P.length-1].y>=P[0].y, col=up?C.green:C.red;
+  // grid + right-aligned values
+  const st=niceStep(hi-lo);
+  for(let v=Math.ceil(lo/st)*st;v<=hi+1e-9;v+=st){const yy=Y(v); if(yy<Y0-8||yy>Y1+6) continue;
+    const zero=pct&&Math.abs(v)<1e-9;
+    el('line',{x1:0,x2:PW+8,y1:yy,y2:yy,stroke:C.muted,'stroke-opacity':zero?.8:.35,'stroke-dasharray':zero?'':'2 4'});
+    el('text',{x:W-16,y:yy+3.5,'text-anchor':'end','font-size':10,fill:C.muted}).textContent=pct?(v>0?'+':'')+(+v.toFixed(2))+'%':Math.round(v).toLocaleString('en-US');}
+  if(!pct) el('line',{x1:0,x2:PW,y1:Y(P[0].y),y2:Y(P[0].y),stroke:C.muted,'stroke-dasharray':'2 4'});
+  const defs=el('defs',{}), g=el('linearGradient',{id:'ga',x1:0,y1:0,x2:0,y2:1},defs);
+  el('stop',{offset:0,'stop-color':col,'stop-opacity':.2},g); el('stop',{offset:1,'stop-color':col,'stop-opacity':0},g);
+  const pts=P.map((p,i)=>[X(i),Y(p.y)]), d=smooth(pts), base=pct?Y(0):Y1+24;
+  el('path',{d:d+` L${PW} ${base} L0 ${base} Z`,fill:'url(#ga)'});
+  if(pct) el('path',{d:smooth(P.map((p,i)=>[X(i),Y(p.b)])),fill:'none',stroke:C.bench,'stroke-width':2,'stroke-dasharray':'5 4','stroke-linecap':'round'});
+  el('path',{d,fill:'none',stroke:col,'stroke-width':3,'stroke-linecap':'round','stroke-linejoin':'round'});
+  // max / min (Label/xSmall, text/disabled, 10px dot with 2px white ring)
+  const mm=el('g',{id:'mm'});
+  if(!pct){let iMax=0,iMin=0;P.forEach((p,i)=>{if(p.y>P[iMax].y)iMax=i;if(p.y<P[iMin].y)iMin=i;});
+    for(const [i,t] of [[iMax,'მაქს. '],[iMin,'მინ. ']]){ if(i===P.length-1) continue; const [px,py]=pts[i], left=px>PW/2;
+      el('circle',{cx:px,cy:py,r:4,fill:col,stroke:C.white,'stroke-width':2},mm);
+      el('text',{x:left?px-9:px+9,y:py+4,'text-anchor':left?'end':'start','font-size':11,fill:C.muted},mm).textContent=t+fmt(P[i].v);}}
+  // x-axis dates
+  const xl=el('g',{id:'xl'}), long=P[P.length-1].t-P[0].t>400*MS;
+  [0,1/3,2/3,1].forEach((f,k)=>{const i=Math.round(f*(P.length-1)),dd=new Date(P[i].t);
+    el('text',{x:k===0?16:X(i),y:H-8,'text-anchor':k===0?'start':k===3?'end':'middle','font-size':11,fill:C.muted,'data-x':X(i)},xl).textContent=long?MON[dd.getUTCMonth()]+' '+dd.getUTCFullYear():dstr(P[i].t);});
+  // scrub layer
+  el('rect',{id:'dim',x:PW,y:0,width:W-PW,height:Y1+26,fill:C.white,'fill-opacity':.6,visibility:'hidden'});
+  el('rect',{id:'vline',x:0,y:14,width:1,height:Y1+6,fill:C.muted,visibility:'hidden'});
+  el('text',{id:'vdate',x:0,y:8,'text-anchor':'middle','font-size':11,fill:C.muted,visibility:'hidden'});
+  if(pct){const i=P.length-1; el('circle',{id:'bdot',cx:X(i),cy:Y(P[i].b),r:5,fill:C.bench,stroke:C.white,'stroke-width':2});}
+  const h=el('g',{class:'handle',id:'handle'});
+  el('circle',{r:11,fill:col,'fill-opacity':.2},h); el('circle',{r:5,fill:col,stroke:C.white,'stroke-width':2},h); el('circle',{r:22,fill:'transparent'},h);
+  view={P,pts,pct,X,Y}; placeHandle(P.length-1); header();
+}
+function placeHandle(i){const [x,y]=view.pts[i];$('handle').setAttribute('transform',`translate(${x} ${y})`);
+  if(view.pct){const b=$('bdot');b.setAttribute('cx',x);b.setAttribute('cy',view.Y(view.P[i].b));}}
+
+/* ---------- header (principal amount + change for the visible period) ---------- */
+function header(){
+  const {P,pct}=view, i=S.scrub==null?P.length-1:S.scrub, p=P[i], p0=P[0];
+  const dv=p.v-p0.v, dp=(p.v/p0.v-1)*100, up=dv>=0;
+  if(pct){$('amount').textContent=(dp>=0?'+':'−')+Math.abs(dp).toFixed(2);$('cur').textContent='%';}
+  else {$('amount').textContent=fmt(p.v);$('cur').textContent='$';}
+  $('arrow').src=up?'assets/price-up.svg':'assets/price-down.svg';
+  $('chgTxt').className=up?'success':'danger';
+  $('chgTxt').textContent=(up?'+':'−')+'$'+fmt(dv)+' ('+Math.abs(dp).toFixed(2)+'%)';
+  $('chgLbl').textContent=S.scrub!=null?dstr(p0.t)+' – '+dstr(p.t):S.custom?dstr(S.from)+' – '+dstr(S.to):LABEL[S.range];
+  $('bench').classList.toggle('show',pct); $('legend').classList.toggle('show',pct); $('unit').classList.toggle('show',S.custom);
+  if(pct){const diff=dp-p.b; $('benchTxt').textContent='S&P 500 · '+(p.b>=0?'+':'−')+Math.abs(p.b).toFixed(2)+'%';
+    $('benchLbl').textContent=(diff>=0?'+':'−')+Math.abs(diff).toFixed(2)+' პპ-ით '+(diff>=0?'წინ ხარ':'ჩამორჩები');}
+}
+
+/* ---------- drag the green circle (or press anywhere on the chart) ---------- */
+let dragging=false;
+const svgX=e=>{const r=svg.getBoundingClientRect();return (e.clientX-r.left)*W/r.width;};
+function scrubTo(x){
+  const {P,pts}=view,n=P.length-1,i=Math.max(0,Math.min(n,Math.round(x/PW*n))); if(i===S.scrub) return;
+  S.scrub=i; const px=pts[i][0]; placeHandle(i);
+  const dim=$('dim'); dim.setAttribute('x',px); dim.setAttribute('width',W-px); dim.setAttribute('visibility','visible');
+  const vl=$('vline'); vl.setAttribute('x',px-.5); vl.setAttribute('visibility','visible');
+  const vd=$('vdate'); vd.textContent=dstr(P[i].t,true); vd.setAttribute('x',Math.max(34,Math.min(PW-30,px))); vd.setAttribute('visibility','visible');
+  $('mm').style.display='none'; [...$('xl').children].forEach(t=>t.style.opacity=Math.abs(+t.dataset.x-px)<40?0:1);
+  if(navigator.vibrate) navigator.vibrate(3); header();
+}
+function endScrub(){ if(!dragging) return; dragging=false; S.scrub=null;
+  ['dim','vline','vdate'].forEach(id=>$(id).setAttribute('visibility','hidden'));
+  $('mm').style.display=''; [...$('xl').children].forEach(t=>t.style.opacity=1); placeHandle(view.P.length-1); header(); }
+svg.addEventListener('pointerdown',e=>{dragging=true;svg.setPointerCapture(e.pointerId);S.scrub=null;scrubTo(svgX(e));});
+svg.addEventListener('pointermove',e=>{if(dragging){e.preventDefault();scrubTo(svgX(e));}});
+svg.addEventListener('pointerup',endScrub); svg.addEventListener('pointercancel',endScrub);
+
+/* ---------- timeframes + $/% ---------- */
+function setUnit(u){S.unit=u;document.querySelectorAll('#unit button').forEach(x=>x.classList.toggle('on',x.dataset.u===u));}
+$('seg').addEventListener('click',e=>{const b=e.target.closest('button'); if(!b) return;
+  S.range=b.dataset.r; S.custom=false; setUnit('usd');
+  document.querySelectorAll('#seg button').forEach(x=>x.classList.toggle('on',x===b));
+  $('calBtn').classList.remove('secondary'); render();});
+$('unit').addEventListener('click',e=>{const b=e.target.closest('button'); if(!b) return; setUnit(b.dataset.u); render();});
+
+/* ---------- Bottom Sheet: Text inputs + Wheel Picker (Multi) ---------- */
+const ROW=24, YEARS=[2024,2025,2026], sheet={from:0,to:0,edit:'from'}, cols={d:$('cDay'),m:$('cMon'),y:$('cYear')};
+// Wheel Picker item scale from the DS component: selected 24/100%, then 17.25/60%, 13.5/30%, 11.25/20%
+const STEPS=[[24,1],[17.25,.6],[13.5,.3],[11.25,.2]];
+function fill(c,items){c.innerHTML='<div class="pad"></div>'+items.map(t=>`<div class="it">${t}</div>`).join('')+'<div class="pad"></div>';}
+const dim=(y,m)=>new Date(Date.UTC(y,m+1,0)).getUTCDate();
+const items=c=>[...c.querySelectorAll('.it')];
+const sel=c=>Math.max(0,Math.min(items(c).length-1,Math.round(c.scrollTop/ROW)));
+fill(cols.m,MON); fill(cols.y,YEARS);
+function paint(c){const pos=c.scrollTop/ROW; items(c).forEach((x,i)=>{const k=Math.min(3,Math.round(Math.abs(i-pos))); x.style.fontSize=STEPS[k][0]+'px'; x.style.opacity=STEPS[k][1];});}
+let silent=false,timer;
+function setWheel(t){const d=new Date(t); silent=true;
+  fill(cols.d,Array.from({length:dim(d.getUTCFullYear(),d.getUTCMonth())},(_,i)=>i+1));
+  cols.d.scrollTop=(d.getUTCDate()-1)*ROW; cols.m.scrollTop=d.getUTCMonth()*ROW; cols.y.scrollTop=YEARS.indexOf(d.getUTCFullYear())*ROW;
+  Object.values(cols).forEach(paint); setTimeout(()=>silent=false,150);}
+function commit(){
+  const y=YEARS[sel(cols.y)], m=sel(cols.m), maxD=dim(y,m);
+  if(items(cols.d).length!==maxD){const keep=Math.min(sel(cols.d)+1,maxD); silent=true; fill(cols.d,Array.from({length:maxD},(_,i)=>i+1)); cols.d.scrollTop=(keep-1)*ROW; paint(cols.d); setTimeout(()=>silent=false,150);}
+  const raw=D(y,m+1,Math.min(sel(cols.d)+1,maxD)).getTime(), t=Math.max(FIRST.getTime(),Math.min(LAST.getTime(),raw));
+  sheet[sheet.edit]=t; updateSheet(); if(t!==raw) setWheel(t);   // snap back into the available data range
+}
+Object.values(cols).forEach(c=>{
+  c.addEventListener('scroll',()=>{paint(c); if(silent) return; clearTimeout(timer); timer=setTimeout(commit,120);},{passive:true});
+  c.addEventListener('click',e=>{const i=items(c).indexOf(e.target); if(i>=0) c.scrollTo({top:i*ROW,behavior:'smooth'});});
+});
+function updateSheet(){
+  $('fFromV').textContent=dstr(sheet.from,true); $('fToV').textContent=dstr(sheet.to,true);
+  $('fFrom').classList.toggle('active',sheet.edit==='from'); $('fTo').classList.toggle('active',sheet.edit==='to');
+  const msg=$('msg');
+  if(sheet.to-sheet.from<2*MS){msg.className='helper t-body-s err'; msg.textContent='„მდე“ უნდა იყოს „დან“-ზე მინიმუმ 2 დღით გვიან'; $('apply').disabled=true; return;}
+  const a=port[idxOf(sheet.from)].v, b=port[idxOf(sheet.to)].v, dv=b-a;
+  msg.className='helper t-body-s'; msg.textContent=`ცვლილება პერიოდში: ${dv>=0?'+':'−'}$${fmt(dv)} (${Math.abs((b/a-1)*100).toFixed(2)}%)`;
+  $('apply').disabled=false;
+}
+function openSheet(){const [a,b]=rangeBounds(); Object.assign(sheet,{from:a,to:b,edit:'from'});
+  $('scrim').classList.add('open'); $('sheet').classList.add('open'); updateSheet(); requestAnimationFrame(()=>setWheel(sheet.from));}
+function closeSheet(){$('scrim').classList.remove('open'); $('sheet').classList.remove('open');}
+$('calBtn').onclick=openSheet; $('scrim').onclick=closeSheet; $('closeSheet').onclick=closeSheet;
+$('fFrom').onclick=()=>{sheet.edit='from';updateSheet();setWheel(sheet.from);};
+$('fTo').onclick=()=>{sheet.edit='to';updateSheet();setWheel(sheet.to);};
+$('apply').onclick=()=>{S.custom=true; S.from=sheet.from; S.to=sheet.to; setUnit('usd');
+  document.querySelectorAll('#seg button').forEach(x=>x.classList.remove('on'));
+  $('calBtn').classList.add('secondary'); closeSheet(); render();};
+
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,6 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="20" height="8" viewBox="0 0 20 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Slider Indicator">
+<path id="active" d="M0 4C0 1.79086 1.79086 0 4 0V0C6.20914 0 8 1.79086 8 4V4C8 6.20914 6.20914 8 4 8V8C1.79086 8 0 6.20914 0 4V4Z" fill="#FF5C0A" style="fill:#FF5C0A;fill:color(display-p3 1.0000 0.3595 0.0392);fill-opacity:1;"/>
+<circle id="inactive" opacity="0.3" cx="16" cy="4" r="4" fill="#1B1C1D" style="fill:#1B1C1D;fill:color(display-p3 0.1056 0.1094 0.1144);fill-opacity:1;"/>
+</g>
+</svg>

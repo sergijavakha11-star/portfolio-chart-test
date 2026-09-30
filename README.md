@@ -14,8 +14,17 @@ Figma: `fGbqU0w597OlqwahjQSj6M`, სექცია `18609:46674` (ეკრა�
 
 GitHub-ზე `index.html`-ს ახალ ვერსიას ატვირთავ (Add file → Upload files → Commit) — Vercel თვითონ გადააწყობს 1 წუთში, ლინკი იგივე რჩება.
 
+## შრიფტი
+
+გვერდში BOG შრიფტის **შეკვეცილი** ვერსიაა ჩაშენებული (მხოლოდ ამ გვერდზე გამოყენებული ~60 სიმბოლო, სახელების/მეტამონაცემების გარეშე, ~5 KB). ცალკე შრიფტის ფაილი არ არსებობს.
+თუ გვერდზე ახალი ქართული ტექსტი დაემატა, ჩაშენებული შრიფტი თავიდან ააწყე (სრული TTF-ები `~/Desktop/TTF`-შია და არსად იტვირთება):
+
+```
+python3 ~/Desktop/portfolio-chart-local/build_font.py
+```
+
 ## ლოკალურად
 
 ```
-cd ~/Desktop/portfolio-chart-web && python3 -m http.server 8080 --bind 0.0.0.0
+python3 ~/Desktop/portfolio-chart-local/serve.py 8080
 ```
